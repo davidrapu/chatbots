@@ -1,6 +1,7 @@
 import anthropic
 from anthropic.types import MessageParam
 from dotenv import load_dotenv
+
 load_dotenv()
 
 client = anthropic.Anthropic()
@@ -23,7 +24,24 @@ You cannot access or manage accounts. Never ask for personal or account details 
 
 Handing off to a person
 When you can't answer, when the question concerns the user's own account or application, when the user asks for a person, or when they seem frustrated, give these contact details:
-[CONTACT DETAILS FROM PAGE FINANCIALS]
+Head Office
+23 Norman Williams Street, S/W Ikoyi
+Lagos, Nigeria
+
+Ikeja Office
+29, Opebi Road, Ikeja,
+Lagos, Nigeria
+
+Ibadan Office
+9 Oyo Road, Total Filling Station Opposite Top Success Building, Mokola - Dugbe Road, Ibadan, Nigeria
+
+Abuja Office
+44 Mambolo street Wuse zone 2,
+Abuja, Nigeria
+
+Email: customer@pagefinancials.com
+Phone: +234 700 000 7243
+
 
 Scope
 Only help with Page Financials' products and services. For anything else, say briefly that you can only help with Page Financials questions, then offer to help with one.
@@ -35,7 +53,7 @@ Style
 Plain text only, no markdown. Keep replies short, warm and professional, usually two to four sentences. Greet the user once at the start, not in every reply. Use naira (₦) for amounts.
 
 <company_information>
-[PAGE FINANCIALS CONTENT GOES HERE]
+
 </company_information>
 """
 def send_message_to_claude(user_input):
@@ -58,7 +76,7 @@ def send_message_to_claude(user_input):
             "content": message.content
         })
         return text
-    except Exception as e:
+    except anthropic.APIError as e:
         history.pop()  # Remove the last user message if the request fails
         return f"Error occurred while sending message: {e}"
 def send_message_to_claude_v2(user_input):
@@ -80,26 +98,40 @@ def send_message_to_claude_v2(user_input):
             "content": message.content
         })
         return text
-    except Exception as e:
+    except anthropic.APIError as e:
         history.pop()  # Remove the last user message if the request fails
         return f"Error occurred while sending message: {e}"
 
 
-name = input("What is your name?: ")
+# name = input("What is your name?: ")
 
-print(f"Nice to meet you, {name}!")
+# print(f"Nice to meet you, {name}!")
 
-while True:
-    user_input = input(f"{name}: ")
-    if not user_input.strip():
-        print("Please enter a valid message.")
-        continue
-    if user_input.lower().strip() in ["exit", "quit", "bye"]:
-        print("Exiting the chat. Goodbye!")
-        break
+# while True:
+#     user_input = input(f"{name}: ")
+#     if not user_input.strip():
+#         print("Please enter a valid message.")
+#         continue
+#     if user_input.lower().strip() in ["exit", "quit", "bye"]:
+#         print("Exiting the chat. Goodbye!")
+#         break
 
-    # Here you would send the user_input to the Claude API and get a response
-    response = send_message_to_claude(user_input)
-    print(f"Pagi: {response}")
+#     # Here you would send the user_input to the Claude API and get a response
+#     response = send_message_to_claude(user_input)
+#     print(f"Pagi: {response}")
 
 # print(send_message_to_claude("Hello, Claude! How are you today?"))
+
+with client.messages.stream(
+    max_tokens=1024,
+    messages=[
+        {
+            "role": "user",
+            "content": "explain how personal loans work in about 300 words",
+        }
+    ],
+    system=SYSTEM_PROMPT,
+    model="claude-haiku-4-5-20251001",
+) as stream:
+    for text in stream.text_stream:
+        print(text, end='', flush=True)
