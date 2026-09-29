@@ -36,7 +36,7 @@ Use `claude-haiku-4-5-20251001` for development to keep costs down.
 
 ## Roadmap and progress
 
-### Phase 1: LLM fundamentals — DONE
+### Phase 1: LLM fundamentals
 LLMs vs APIs, system/user messages, tokens, context window, temperature, structured
 output, API keys, streaming.
 - Built a Python CLI chat loop with history and error handling (pop the user message
@@ -46,7 +46,7 @@ output, API keys, streaming.
   `output_config.format` with a JSON schema (array of objects via `items`, enum
   categories, optional `amount`), totals per category
 
-### Phase 2: LLM API as an endpoint — DONE
+### Phase 2: LLM API as an endpoint
 - FastAPI `POST /chat`: `{"message": "..."}` -> `{"response": "..."}`
 - `AsyncAnthropic` client in `bot.py` with async route (sync client would block the
   event loop)
@@ -55,12 +55,12 @@ output, API keys, streaming.
 - Outstanding tidy-ups: `Field(max_length=2000)` on message, remove unused
   `Response` import, fix typo in 400 detail, consider 502/503 for upstream failures
 
-### Phase 3: Chat application — NEXT
+### Phase 3: Chat application
 React chat UI in front of the FastAPI endpoint. Loading states, error handling,
 streaming to the browser. Expect CORS errors first: add FastAPI `CORSMiddleware`.
 Still no RAG at this stage.
 
-### Phase 4: Prompting — STARTED
+### Phase 4: Prompting
 System prompts, prompt structure, grounding, hallucinations, instructions vs user
 input, prompt injection, output constraints, fallback responses.
 - Pagi system prompt drafted in `bot.py` (answer only from `<company_information>`,
