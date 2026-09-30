@@ -87,7 +87,7 @@ async def stream_and_save(session_id: str, history: list[MessageParam]):
         if session_id in message_history and message_history[session_id]:
             message_history[session_id].pop()
         raise 
-    
+
     message_history.setdefault(session_id, []).append(
         MessageHistoryItem(
             session_id=session_id, role="assistant", content=''.join(chunks)
@@ -152,5 +152,5 @@ async def chat_streaming(request: ChatRequest, cookies: Annotated[Cookies, Cooki
             samesite="lax",
         )  # Set the session_id cookie for new sessions
 
-    print(message_history)  # Debugging: Print the message history to the console
+    # print(message_history)  # Debugging: Print the message history to the console
     return response
