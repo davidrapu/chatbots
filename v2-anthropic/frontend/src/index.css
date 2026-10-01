@@ -1,8 +1,50 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap');
-
-
 @import "tailwindcss";
 
-@theme{
-    --font-sans: 'Roboto Mono', monospace;
+@theme {
+  /* System UI stack: the widget will sit inside the client's site, so it should
+     read as native rather than bring its own typeface. */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+
+  /* Single brand accent. Swap these for Page Financials' colours in Phase 10. */
+  --color-brand-50: oklch(0.97 0.02 165);
+  --color-brand-500: oklch(0.55 0.1 165);
+  --color-brand-600: oklch(0.47 0.09 165);
+  --color-brand-700: oklch(0.4 0.08 165);
+}
+
+/* Lets the browser draw native UI (scrollbars, form controls) in dark mode too. */
+:root {
+  color-scheme: light dark;
+}
+
+/* Preflight strips list and paragraph styles, so restore them for Pagi's Markdown. */
+@layer components {
+  /* Slim scrollbar with no track, like Claude's */
+  .scroll-area {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(120 113 108 / 0.4) transparent;
+  }
+
+  .chat-markdown > * + * {
+    margin-top: 0.5rem;
+  }
+  .chat-markdown ul {
+    list-style: disc;
+    padding-left: 1.25rem;
+  }
+  .chat-markdown ol {
+    list-style: decimal;
+    padding-left: 1.25rem;
+  }
+  .chat-markdown li + li {
+    margin-top: 0.125rem;
+  }
+  .chat-markdown strong {
+    font-weight: 600;
+  }
+  .chat-markdown a {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
 }
