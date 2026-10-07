@@ -1,42 +1,22 @@
-import { useRef, useState } from "react";
-import { useChat } from "./hooks/useChat";
-import ChatHeader from "./ui/ChatHeader";
-import Composer from "./ui/Composer";
-import MessageList from "./ui/MessageList";
+import ChatWidget from "./ui/ChatWidget";
 
+/**
+ * Stand-in for the Page Financials website. In Phase 10 only <ChatWidget /> gets
+ * embedded in the real site; this page just gives the widget something to sit on.
+ */
 export default function App() {
-  const { messages, isLoading, error, sendMessage } = useChat();
-  const [userInput, setUserInput] = useState("");
-  const inputRef = useRef<HTMLTextAreaElement>(null);
-
-  const send = async (text: string) => {
-    setUserInput("");
-    const ok = await sendMessage(text);
-    if (!ok) setUserInput(text.trim()); // give the text back so the user can resend it
-    inputRef.current?.focus();
-  };
-
   return (
-    <main className="flex min-h-dvh items-center justify-center bg-stone-100 sm:p-6 dark:bg-stone-950">
-      <section
-        aria-label="Chat with Pagi"
-        className="flex h-dvh w-full flex-col overflow-hidden bg-stone-50 sm:h-[min(720px,calc(100dvh-3rem))] sm:max-w-md sm:rounded-2xl sm:border sm:border-stone-200 sm:shadow-xl sm:shadow-stone-300/40 dark:bg-stone-900 sm:dark:border-stone-800 sm:dark:shadow-black/30"
-      >
-        <ChatHeader />
-        <MessageList
-          messages={messages}
-          isLoading={isLoading}
-          error={error}
-          onSuggestion={send}
-        />
-        <Composer
-          ref={inputRef}
-          value={userInput}
-          onChange={setUserInput}
-          onSend={() => send(userInput)}
-          isLoading={isLoading}
-        />
-      </section>
+    <main className="min-h-dvh bg-stone-100 px-6 py-16 dark:bg-stone-950">
+      <div className="mx-auto max-w-2xl">
+        <h1 className="text-3xl font-semibold text-stone-900 dark:text-stone-50">
+          Page Financials
+        </h1>
+        <p className="mt-3 text-stone-600 dark:text-stone-400">
+          Placeholder page. Click the chat button in the bottom-right corner to
+          talk to Pagi.
+        </p>
+      </div>
+      <ChatWidget />
     </main>
   );
 }
