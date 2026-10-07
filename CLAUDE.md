@@ -52,13 +52,25 @@ output, API keys, streaming.
   event loop)
 - Pydantic request/response models, 400 on whitespace-only message (422 comes from
   Pydantic when the field is missing), API errors -> clean HTTP error
-- Outstanding tidy-ups: `Field(max_length=2000)` on message, remove unused
-  `Response` import, fix typo in 400 detail, consider 502/503 for upstream failures
+- Done: `Field(max_length=2000)`, 503/502 on upstream failures for `/chat/stream`
+  (plain `/chat` still returns 500)
 
 ### Phase 3: Chat application
 React chat UI in front of the FastAPI endpoint. Loading states, error handling,
 streaming to the browser. Expect CORS errors first: add FastAPI `CORSMiddleware`.
 Still no RAG at this stage.
+- Done. `POST /chat/stream` returns a `StreamingResponse` (text/plain) from an async
+  generator over `text_stream`. Prime the stream with `anext()` so a failure before
+  the first chunk becomes a clean 503 instead of a broken 200
+- Browser reads it with `fetch` + `getReader()` + `TextDecoder`, consumed with
+  `for await` in the `useChat` hook. State updaters must be pure (StrictMode runs
+  them twice, which doubled the text when I mutated state)
+- On failure: drop the unanswered user message, show an error, give the text back
+- UI split into `hooks/useChat.ts` and `ui/` components (MessageList, Composer,
+  Message with react-markdown, Loader, EmptyState, ErrorNotice). Tailwind v4
+- Session cookie: server generates a uuid, HttpOnly, SameSite=lax, 30 min, fetch
+  with `credentials: "include"`. Use `localhost`, not `127.0.0.1` (different site,
+  cookie not sent)
 
 ### Phase 4: Prompting
 System prompts, prompt structure, grounding, hallucinations, instructions vs user
@@ -66,9 +78,17 @@ input, prompt injection, output constraints, fallback responses.
 - Pagi system prompt drafted in `bot.py` (answer only from `<company_information>`,
   no rates/terms/approval odds, no personal data, human handoff with contact details,
   scope limits, resist injection, plain text, greet once)
-- `<company_information>` is currently empty: every product question should get
-  "I don't have that information" + contact details. If it names a product or
-  number, it's hallucinating
+- `<company_information>` now holds the client FAQ (`COMPANY_INFO` in `bot.py`),
+  pasted in whole until RAG replaces it. System prompt is ~3.2k tokens, under
+  Haiku's 4096-token minimum for prompt caching
+- Eval runner in `chatbot/tests/` (30 cases, run `python -m tests.test_chat_response`
+  from `chatbot/`) with an LLM-as-judge: separate judge prompt, transcript passed as
+  data in XML tags, reasoning field before the grade, `messages.parse` with a
+  Pydantic model (`parsed_output` can be None). Last run: 21/30
+- Known failures: trailing questions, applying FAQ limits to the individual
+  ("₦1m falls within that range"), no FAQ entry for "How do I apply?" (ask client).
+  Judge rule 5 should allow "I can't access accounts"
+- FAQ content has contradictions to raise with the client
 - Contact details in the prompt still need confirming with Page Financials
 - Page Financials should review/approve the final prompt wording (regulated firm)
 
@@ -76,6 +96,11 @@ input, prompt injection, output constraints, fallback responses.
 Documents, chunking, embeddings, vector databases, retrieval, context injection.
 Pipeline: ingestion -> retrieval -> augmentation -> generation.
 Resource: Pinecone's RAG guide. Understand why embeddings, not the maths.
+- Started: `embeddings_excercise.py` splits the FAQ into question/answer chunks,
+  embeds with sentence-transformers `all-MiniLM-L6-v2` (local, free), ranks by
+  cosine similarity, `get_top_3()`. `encode` takes strings, not dicts; tensors need
+  `.tolist()`/`.item()`; `list.sort()` returns None, use `sorted()`
+- Next: try real queries, see where it retrieves the wrong chunk, then chunk size
 
 ### Phase 6: Build a RAG chatbot
 pgvector in PostgreSQL (github.com/pgvector/pgvector). First build an independent
@@ -96,6 +121,9 @@ in PostgreSQL. A server can't use one global history list: key by session ID.
 - `max_tokens` caps the reply; the context window is the real limit. Manage cost with
   a sliding window (slice must start on a user message) or summarisation; prompt
   caching for the large repeated prefix. Session timeout after inactivity
+- Partly done: history is an in-memory `dict[session_id, list]` keyed by the cookie.
+  Lost on server restart, never cleaned up. Mismatch: a page reload empties the UI
+  but the server still has the history (fix: reset on load or `GET /chat/history`)
 
 ### Phase 9: Logging
 Conversation (id, createdAt, sessionId) and Message (id, conversationId, role,
@@ -105,6 +133,14 @@ Topic tagging for analytics can be done offline in bulk (Batch API), not live.
 ### Phase 10: The widget
 Floating chat button that opens the assistant, embedded in the Page Financials site
 and matching its design. Only after the chatbot works.
+- Started early: `ui/ChatWidget.tsx` has a bottom-right launcher and a 380px panel
+  (full screen on phones). Panel stays mounted while closed (`inert`) so the chat
+  survives; Escape closes and focus returns to the launcher. `App.tsx` is just a
+  placeholder page
+- Still to do: real brand colours (`--color-brand-*` in `index.css`), replace Vite
+  favicon, embedding in the client site. Session cookie becomes third-party there
+  (serve the API from a subdomain, or sessionStorage + a header)
+- Phosphor v2.1+: use the `…Icon` names (`XIcon`); the old names are deprecated
 
 ### Phase 11: Deployment
 Environment variables, production API keys, CORS, HTTPS, rate limiting, input
@@ -119,6 +155,11 @@ monitoring, hosting, database deployment.
 - JSON Schema is its own standard (json-schema.org, "Understanding JSON Schema").
   Keywords that don't apply to a type are silently ignored (e.g. `properties` on an
   array; arrays use `items`). Check Anthropic's JSON Schema limitations section
+- The API is stateless: every call resends the whole history, so cost grows with
+  each turn (same reason agent tools burn so many input tokens)
+- `load_dotenv()` doesn't override a variable already set in the shell, so an old
+  `ANTHROPIC_API_KEY` in the environment beats `.env` (caused my 401s)
+- Windows defaults to cp1252: open files with `encoding="utf-8"` (₦ broke printing)
 - Every extra model call should earn its place (e.g. skip a live classifier call
   for Tier 1)
 
