@@ -35,7 +35,7 @@ export default function MessageList({
       role="log"
       aria-live="polite"
       aria-busy={isLoading}
-      className="scroll-area flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-5"
+      className="scroll-area flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-5 relative"
     >
       {messages.length === 0 ? (
         <EmptyState onSelect={onSuggestion} />

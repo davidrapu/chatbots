@@ -1,4 +1,4 @@
-import { PaperPlaneRight } from "@phosphor-icons/react";
+import { PaperPlaneRightIcon } from "@phosphor-icons/react";
 
 const MAX_LENGTH = 2000; // matches Field(max_length=2000) on the backend
 
@@ -58,7 +58,7 @@ export default function Composer({
           aria-label="Send message"
           className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-600 text-white transition-colors hover:bg-brand-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 active:scale-[0.96] disabled:cursor-not-allowed disabled:bg-stone-200 disabled:text-stone-500 dark:disabled:bg-stone-700 dark:disabled:text-stone-400"
         >
-          <PaperPlaneRight size={18} weight="fill" aria-hidden="true" />
+          <PaperPlaneRightIcon size={18} weight="fill" aria-hidden="true" />
         </button>
       </div>
       <p className="mt-2 px-1 text-center text-xs text-stone-500 dark:text-stone-400">

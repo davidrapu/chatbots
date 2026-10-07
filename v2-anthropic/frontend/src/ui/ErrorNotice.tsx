@@ -1,4 +1,4 @@
-import { WarningCircle } from "@phosphor-icons/react";
+import { WarningCircleIcon } from "@phosphor-icons/react";
 
 export default function ErrorNotice({ message }: { message: string }) {
   return (
@@ -6,7 +6,7 @@ export default function ErrorNotice({ message }: { message: string }) {
       role="alert"
       className="mt-3 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200"
     >
-      <WarningCircle
+      <WarningCircleIcon
         size={18}
         weight="fill"
         className="mt-0.5 shrink-0"
