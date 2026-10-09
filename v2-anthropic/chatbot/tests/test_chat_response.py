@@ -1,6 +1,7 @@
 from typing import TypedDict, Literal
 from tests.test_cases import test_cases
-from bot import get_response, test_bot_response
+from bots.bot import get_response
+from judge.judge_bot import test_bot_response
 from anthropic.types import MessageParam
 import asyncio
 
