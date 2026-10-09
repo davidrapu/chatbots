@@ -6,4 +6,11 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: 'vector db'
     ports:
-      - '5432:5432'
+      # 5433 on this machine: a Windows-installed Postgres already uses 5432
+      - '5433:5432'
+    volumes:
+      # Keeps the data when the container is removed (Postgres 18 images mount here)
+      - pgdata:/var/lib/postgresql
+
+volumes:
+  pgdata:
