@@ -1,7 +1,8 @@
-# Pagi backend
+# FAQ chatbot backend (practice project)
 
-FastAPI server for Pagi, the Page Financials FAQ chatbot. It answers questions
-using retrieval-augmented generation (RAG): each message is embedded, the most
+A practice project for learning to build LLM chatbots. This FastAPI server
+answers questions about an example company's FAQ using retrieval-augmented
+generation (RAG): each message is embedded, the most
 similar FAQ entries are found in Postgres with pgvector, and Claude
 (`claude-haiku-4-5-20251001`) answers from those entries only. The reply is
 streamed to the React frontend in `../frontend`.
@@ -71,7 +72,7 @@ Run once at setup:
 python -m rag.ingestion
 ```
 
-This splits `data/company_info.py` into 46 question-and-answer chunks, embeds
+This splits `data/company_info.py` into question-and-answer chunks, embeds
 them and inserts them. Running it again inserts duplicates. To re-ingest, empty
 the table first with `TRUNCATE faq_chunks;`.
 
@@ -112,14 +113,14 @@ The API runs at `http://localhost:8000`, with interactive docs at
 | ----------------------------- | ------------------------------------------------------- |
 | `main.py`                     | Route, CORS, session cookie, history, RAG steps         |
 | `bots/bot.py`                 | Claude client and streaming                             |
-| `prompts/main_system.py`      | Pagi's system prompt                                    |
+| `prompts/main_system.py`      | The chatbot's system prompt                             |
 | `prompts/judge_system.py`     | System prompt for the eval judge (uses the full FAQ)    |
 | `rag/embeddings.py`           | Loads the embedding model once; `embed()`               |
 | `rag/db.py`                   | Sync (ingestion) and async (retrieval) DB connections   |
 | `rag/retrival.py`             | `search_chunk()`: vector search for the top chunks      |
 | `rag/ingestion.py`            | One-off script: chunk, embed and insert the FAQ         |
 | `rag/schema.sql`              | pgvector extension and `faq_chunks` table               |
-| `data/company_info.py`        | The client FAQ text (source for ingestion)              |
+| `data/company_info.py`        | Example FAQ text (source for ingestion)                 |
 | `judge/judge_bot.py`          | LLM-as-judge that grades replies                        |
 | `tests/`                      | 30 eval cases and the runner                            |
 | `compose.yaml`                | Postgres + pgvector container                           |
@@ -131,7 +132,7 @@ The API runs at `http://localhost:8000`, with interactive docs at
 python -m tests.test_chat_response
 ```
 
-This sends 30 test cases to Pagi and grades each reply with a separate judge
+This sends 30 test cases to the chatbot and grades each reply with a separate judge
 call. Results go to `test_results.txt` and `grading_results.txt`. The runner
 still calls the bot **without retrieval**, so its results don't reflect the RAG
 version yet.
