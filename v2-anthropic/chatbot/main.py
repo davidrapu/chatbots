@@ -5,14 +5,18 @@ from fastapi import FastAPI, HTTPException, Cookie
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
-from bot import get_response, get_streaming_response
+from rag.retrival import search_chunk
+from bots.bot import get_response, get_streaming_response
 
 from pydantic import BaseModel, Field
 
 import anthropic
 from anthropic.types import MessageParam
 
+from rag.embeddings import embed
 from service.generateUID import generate_uid
+
+import asyncio
 
 app = FastAPI()
 
@@ -56,27 +60,10 @@ class Cookies(BaseModel):
     session_id: str | None = Field(description="Session ID from cookies.", default=None)
 
 
-@app.post("/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest):
-    if not request or not request.message:
-        raise HTTPException(
-            status_code=400, detail="Request body must contain a 'message' field."
-        )
-    if not request.message.strip():
-        raise HTTPException(status_code=400, detail="Message cannot be empty.")
-    user_input = request.message
-    try:
-        response_text = await get_response(user_input)
-        return ChatResponse(response=response_text)
-    except anthropic.APIError as e:
-        print(f"Anthropic API error: {e}")
-        raise HTTPException(
-            status_code=500, detail="Error communicating with the AI service."
-        )
-
 
 async def stream_and_save(session_id: str, history: list[MessageParam]):
     chunks: list[str] = []
+
     try:
         async for text in get_streaming_response(history):
             chunks.append(text)
@@ -115,18 +102,35 @@ async def chat_streaming(request: ChatRequest, cookies: Annotated[Cookies, Cooki
     if session_id is None or session_id not in message_history:
         is_new_session = True
         session_id = generate_uid()  # Generate a new session ID if not present
+
+    # Remove <company_information> and <question> tags from the user input
+    for tag in ("company_information", "question"):
+        user_input = user_input.replace(f"<{tag}>", "").replace(f"</{tag}>", "")
+
+    # Retrieval of RAG operation: Get the context based on the user's input
+    vector = await asyncio.to_thread(embed, user_input)  # Embed the user's input to get the vector representation
+    context = await search_chunk(vector)  # Get the context based on the user's input
+    # Augmentation of RAG operation: Create a prompt that includes the user's input and the retrieved context
+    bot_prompt =  f'''
+        <company_information>
+        {context}
+        </company_information>
+        <question>
+        {user_input}
+        </question>
+        '''
     
+    user_unique_history: list[MessageParam] = [
+        {"role": item.role, "content": item.content}
+        for item in message_history.get(session_id, [])]  # Filter the history for the current user
+    user_unique_history.append({"role": "user", "content": bot_prompt})  # Add the user's message to the history for the specific user
+    # Add the user's message to the global history but dont include the chunks
     message_history.setdefault(session_id, []).append(
         MessageHistoryItem(session_id=session_id, role="user", content=user_input)
     )  # Add the user's message to the history for the specific user, if no history exists for the user, create a new list
-
-    user_unique_history: list[MessageParam] = [
-        {"role": item.role, "content": item.content}
-        for item in message_history.get(session_id, [])
-    ]  # Filter the history for the current user
-
-
+    
     gen = stream_and_save(session_id, user_unique_history)
+
     try:
         first_chunk = await anext(gen)
     except anthropic.APIError:
