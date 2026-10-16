@@ -1,0 +1,16 @@
+# Secrets: must never be baked into an image
+.env*
+# Huge data
+.venv
+# auto generated
+__pycache__
+# Not needed to run app
+tests/
+judge/
+grading_results.txt
+test_results.txt
+embeddings_excercise.py
+README.md
+compose.yaml
+Dockerfile
+.dockerignore
