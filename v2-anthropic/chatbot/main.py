@@ -19,11 +19,11 @@ from service.generateUID import generate_uid
 
 import asyncio
 
+import os
+
 app = FastAPI()
 
-origins = [
-    "http://localhost:5173",
-]
+origins = [origin.strip() for origin in os.getenv("ALLOWED_ORIGINS", "http://localhost:5173").split(",") if origin]
 
 app.add_middleware(
     CORSMiddleware,
