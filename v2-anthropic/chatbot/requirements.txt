@@ -1,0 +1,9 @@
+fastapi[standard]
+anthropic
+python-dotenv
+psycopg[binary]
+pgvector
+sentence-transformers
+numpy
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch
